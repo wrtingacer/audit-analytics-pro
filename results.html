@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results - Audit Analytics Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fafafa 0%, #f3f4f6 100%);
+            min-height: 100vh;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .chart-container {
+            height: 300px;
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-conforming { background-color: #dcfce7; color: #166534; }
+        .status-warning { background-color: #fef3c7; color: #92400e; }
+        .status-error { background-color: #fee2e2; color: #991b1b; }
+        
+        .audit-button {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .audit-button:hover {
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header Navigation -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-800 to-blue-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold gradient-text">Audit Analytics Pro</h1>
+                            <p class="text-xs text-gray-500">Excel-Integrated Data Analysis Tool</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <nav class="flex items-center space-x-6">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-800 transition-colors">Analytics</a>
+                    <a href="results.html" class="text-blue-800 font-medium border-b-2 border-blue-800 pb-1">Results</a>
+                    <a href="help.html" class="text-gray-600 hover:text-blue-800 transition-colors">Help</a>
+                    <button id="exportPdfBtn" class="audit-button text-white px-4 py-2 rounded-lg font-medium">
+                        Export PDF
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Executive Summary -->
+        <div class="mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Executive Summary</h2>
+                        <p class="text-gray-600">Comprehensive analysis results and key findings</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-500">Generated on</div>
+                        <div class="font-semibold text-gray-900" id="reportDate"></div>
+                    </div>
+                </div>
+                
+                <!-- Key Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="metric-card rounded-lg p-4">
+                        <div class="text-2xl font-bold text-blue-800" id="totalRecords">0</div>
+                        <div class="text-sm text-gray-600">Total Records</div>
+                        <div class="text-xs text-gray-500 mt-1">Analyzed dataset size</div>
+                    </div>
+                    
+                    <div class="metric-card rounded-lg p-4">
+                        <div class="text-2xl font-bold text-amber-600" id="totalIssues">0</div>
+                        <div class="text-sm text-gray-600">Issues Found</div>
+                        <div class="text-xs text-gray-500 mt-1">Requires attention</div>
+                    </div>
+                    
+                    <div class="metric-card rounded-lg p-4">
+                        <div class="text-2xl font-bold text-green-600" id="conformingTests">0</div>
+                        <div class="text-sm text-gray-600">Conforming Tests</div>
+                        <div class="text-xs text-gray-500 mt-1">Passed validation</div>
+                    </div>
+                    
+                    <div class="metric-card rounded-lg p-4">
+                        <div class="text-2xl font-bold text-purple-600" id="riskScore">0%</div>
+                        <div class="text-sm text-gray-600">Risk Score</div>
+                        <div class="text-xs text-gray-500 mt-1">Overall assessment</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Results -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Duplicate Detection Results -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Duplicate Detection</h3>
+                    <span id="duplicateStatus" class="status-badge status-conforming">Not Run</span>
+                </div>
+                
+                <div id="duplicateChart" class="chart-container"></div>
+                
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div class="text-lg font-semibold text-gray-900" id="duplicateCount">0</div>
+                            <div class="text-sm text-gray-500">Duplicates Found</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-semibold text-gray-900" id="duplicatePercentage">0%</div>
+                            <div class="text-sm text-gray-500">Of Total Records</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gap Detection Results -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Gap Detection</h3>
+                    <span id="gapStatus" class="status-badge status-conforming">Not Run</span>
+                </div>
+                
+                <div id="gapChart" class="chart-container"></div>
+                
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div class="text-lg font-semibold text-gray-900" id="gapCount">0</div>
+                            <div class="text-sm text-gray-500">Gaps Found</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-semibold text-gray-900" id="gapRange">0</div>
+                            <div class="text-sm text-gray-500">Max Gap Size</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benford's Law Analysis -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Benford's Law Analysis</h3>
+                <span id="benfordStatus" class="status-badge status-conforming">Not Run</span>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-4">First Digit Distribution</h4>
+                    <div id="benfordChart" class="chart-container"></div>
+                </div>
+                
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-4">Statistical Summary</h4>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <div class="text-sm text-gray-600">Total Values</div>
+                                    <div class="text-lg font-semibold text-gray-900" id="benfordTotal">0</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-600">Deviation Score</div>
+                                    <div class="text-lg font-semibold text-gray-900" id="benfordDeviation">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="text-sm text-gray-600 mb-2">Conclusion</div>
+                            <div id="benfordConclusion" class="font-medium text-gray-900">Not analyzed</div>
+                        </div>
+                        
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <div class="text-sm text-gray-600 mb-2">Recommendation</div>
+                            <div id="benfordRecommendation" class="font-medium text-gray-900">Run analysis for insights</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Findings -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Detailed Findings</h3>
+            
+            <div class="space-y-4" id="findingsList">
+                <!-- Findings will be populated here -->
+            </div>
+        </div>
+
+        <!-- Audit Trail -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">Audit Trail</h3>
+            
+            <div class="space-y-3" id="auditTrail">
+                <!-- Audit trail will be populated here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-gray-500 text-sm">
+                <p>&copy; 2024 Audit Analytics Pro. Professional audit analytics tool with Excel integration.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        class ResultsDashboard {
+            constructor() {
+                this.charts = {};
+                this.results = this.loadResults();
+                this.init();
+            }
+
+            init() {
+                this.updateReportDate();
+                this.updateMetrics();
+                this.initializeCharts();
+                this.updateFindings();
+                this.updateAuditTrail();
+                this.animateElements();
+            }
+
+            loadResults() {
+                // Simulate loading results from localStorage or session
+                const mockResults = {
+                    duplicates: {
+                        column: 'Invoice_Number',
+                        count: 3,
+                        total: 500,
+                        percentage: 0.6,
+                        records: []
+                    },
+                    gaps: {
+                        column: 'Invoice_Number', 
+                        count: 2,
+                        maxGap: 50,
+                        gaps: [{start: 1050, end: 1100}, {start: 1200, end: 1250}]
+                    },
+                    benford: {
+                        column: 'Amount',
+                        total: 1200,
+                        deviation: 0.08,
+                        conclusion: 'Conforming',
+                        expected: [0.301, 0.176, 0.125, 0.097, 0.079, 0.067, 0.058, 0.051, 0.046],
+                        actual: [0.285, 0.182, 0.131, 0.089, 0.075, 0.071, 0.062, 0.048, 0.057]
+                    }
+                };
+                return mockResults;
+            }
+
+            updateReportDate() {
+                const today = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('reportDate').textContent = today;
+            }
+
+            updateMetrics() {
+                const results = this.results;
+                
+                // Total records
+                document.getElementById('totalRecords').textContent = 
+                    Math.max(results.duplicates?.total || 0, results.benford?.total || 0).toLocaleString();
+
+                // Total issues
+                const totalIssues = (results.duplicates?.count || 0) + 
+                                  (results.gaps?.count || 0) + 
+                                  (results.benford?.deviation > 0.1 ? 1 : 0);
+                document.getElementById('totalIssues').textContent = totalIssues;
+
+                // Conforming tests
+                const conformingTests = (results.duplicates?.count === 0 ? 1 : 0) + 
+                                      (results.gaps?.count === 0 ? 1 : 0) + 
+                                      (results.benford?.deviation <= 0.1 ? 1 : 0);
+                document.getElementById('conformingTests').textContent = conformingTests;
+
+                // Risk score
+                const riskScore = Math.min(100, Math.round(
+                    ((results.duplicates?.count || 0) * 10 + 
+                     (results.gaps?.count || 0) * 15 + 
+                     (results.benford?.deviation || 0) * 100) / 3
+                ));
+                document.getElementById('riskScore').textContent = riskScore + '%';
+
+                // Update individual result metrics
+                if (results.duplicates) {
+                    document.getElementById('duplicateCount').textContent = results.duplicates.count;
+                    document.getElementById('duplicatePercentage').textContent = 
+                        results.duplicates.percentage.toFixed(1) + '%';
+                    document.getElementById('duplicateStatus').textContent = 
+                        results.duplicates.count === 0 ? 'Conforming' : 'Issues Found';
+                    document.getElementById('duplicateStatus').className = 
+                        `status-badge ${results.duplicates.count === 0 ? 'status-conforming' : 'status-warning'}`;
+                }
+
+                if (results.gaps) {
+                    document.getElementById('gapCount').textContent = results.gaps.count;
+                    document.getElementById('gapRange').textContent = results.gaps.maxGap;
+                    document.getElementById('gapStatus').textContent = 
+                        results.gaps.count === 0 ? 'Conforming' : 'Issues Found';
+                    document.getElementById('gapStatus').className = 
+                        `status-badge ${results.gaps.count === 0 ? 'status-conforming' : 'status-warning'}`;
+                }
+
+                if (results.benford) {
+                    document.getElementById('benfordTotal').textContent = results.benford.total.toLocaleString();
+                    document.getElementById('benfordDeviation').textContent = 
+                        (results.benford.deviation * 100).toFixed(1) + '%';
+                    document.getElementById('benfordConclusion').textContent = results.benford.conclusion;
+                    document.getElementById('benfordStatus').textContent = results.benford.conclusion;
+                    document.getElementById('benfordStatus').className = 
+                        `status-badge ${results.benford.conclusion === 'Conforming' ? 'status-conforming' : 'status-warning'}`;
+                    
+                    const recommendation = results.benford.deviation > 0.1 ? 
+                        'Investigate potential data manipulation or anomalies' : 
+                        'Data appears natural and unmanipulated';
+                    document.getElementById('benfordRecommendation').textContent = recommendation;
+                }
+            }
+
+            initializeCharts() {
+                this.initDuplicateChart();
+                this.initGapChart();
+                this.initBenfordChart();
+            }
+
+            initDuplicateChart() {
+                const chart = echarts.init(document.getElementById('duplicateChart'));
+                const results = this.results.duplicates;
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)'
+                    },
+                    legend: {
+                        orient: 'vertical',
+                        left: 10,
+                        data: ['Unique Records', 'Duplicates']
+                    },
+                    series: [
+                        {
+                            name: 'Duplicate Analysis',
+                            type: 'pie',
+                            radius: ['50%', '70%'],
+                            avoidLabelOverlap: false,
+                            label: {
+                                show: false,
+                                position: 'center'
+                            },
+                            emphasis: {
+                                label: {
+                                    show: true,
+                                    fontSize: '18',
+                                    fontWeight: 'bold'
+                                }
+                            },
+                            labelLine: {
+                                show: false
+                            },
+                            data: [
+                                { value: results.total - results.count, name: 'Unique Records', itemStyle: { color: '#10b981' } },
+                                { value: results.count, name: 'Duplicates', itemStyle: { color: '#f59e0b' } }
+                            ]
+                        }
+                    ]
+                };
+                
+                chart.setOption(option);
+                this.charts.duplicate = chart;
+            }
+
+            initGapChart() {
+                const chart = echarts.init(document.getElementById('gapChart'));
+                const results = this.results.gaps;
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: ['Gaps Found', 'No Gaps'],
+                        axisTick: {
+                            alignWithLabel: true
+                        }
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [
+                        {
+                            name: 'Gap Analysis',
+                            type: 'bar',
+                            barWidth: '60%',
+                            data: [
+                                { value: results.count, itemStyle: { color: '#f59e0b' } },
+                                { value: 1, itemStyle: { color: '#10b981' } }
+                            ]
+                        }
+                    ]
+                };
+                
+                chart.setOption(option);
+                this.charts.gap = chart;
+            }
+
+            initBenfordChart() {
+                const chart = echarts.init(document.getElementById('benfordChart'));
+                const results = this.results.benford;
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'cross'
+                        }
+                    },
+                    legend: {
+                        data: ['Expected', 'Actual']
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLabel: {
+                            formatter: '{value}%'
+                        }
+                    },
+                    series: [
+                        {
+                            name: 'Expected',
+                            type: 'line',
+                            data: results.expected.map(v => (v * 100).toFixed(1)),
+                            itemStyle: { color: '#3b82f6' },
+                            lineStyle: { type: 'dashed' }
+                        },
+                        {
+                            name: 'Actual',
+                            type: 'line',
+                            data: results.actual.map(v => (v * 100).toFixed(1)),
+                            itemStyle: { color: '#10b981' }
+                        }
+                    ]
+                };
+                
+                chart.setOption(option);
+                this.charts.benford = chart;
+            }
+
+            updateFindings() {
+                const container = document.getElementById('findingsList');
+                const findings = [];
+
+                // Duplicate findings
+                if (this.results.duplicates && this.results.duplicates.count > 0) {
+                    findings.push({
+                        type: 'warning',
+                        title: 'Duplicate Records Detected',
+                        description: `${this.results.duplicates.count} duplicate records found in ${this.results.duplicates.column} column.`,
+                        recommendation: 'Review duplicate entries and determine if they represent data entry errors or legitimate repeated transactions.'
+                    });
+                }
+
+                // Gap findings
+                if (this.results.gaps && this.results.gaps.count > 0) {
+                    findings.push({
+                        type: 'warning',
+                        title: 'Sequence Gaps Identified',
+                        description: `${this.results.gaps.count} gaps detected in ${this.results.gaps.column} column.`,
+                        recommendation: 'Investigate missing sequence numbers to ensure all transactions are recorded and accounted for.'
+                    });
+                }
+
+                // Benford's Law findings
+                if (this.results.benford) {
+                    if (this.results.benford.deviation > 0.1) {
+                        findings.push({
+                            type: 'error',
+                            title: 'Benford\'s Law Deviation',
+                            description: `Significant deviation (${(this.results.benford.deviation * 100).toFixed(1)}%) from expected digit distribution.`,
+                            recommendation: 'This may indicate data manipulation, fraud, or unusual business patterns requiring investigation.'
+                        });
+                    } else {
+                        findings.push({
+                            type: 'success',
+                            title: 'Benford\'s Law Compliance',
+                            description: `Data conforms to expected digit distribution (deviation: ${(this.results.benford.deviation * 100).toFixed(1)}%).`,
+                            recommendation: 'Data appears natural and unmanipulated, consistent with normal business operations.'
+                        });
+                    }
+                }
+
+                if (findings.length === 0) {
+                    findings.push({
+                        type: 'info',
+                        title: 'No Analysis Run',
+                        description: 'No audit analyses have been performed yet.',
+                        recommendation: 'Run audit analyses from the main dashboard to generate findings.'
+                    });
+                }
+
+                container.innerHTML = findings.map(finding => `
+                    <div class="p-4 rounded-lg border ${
+                        finding.type === 'success' ? 'bg-green-50 border-green-200' :
+                        finding.type === 'warning' ? 'bg-amber-50 border-amber-200' :
+                        finding.type === 'error' ? 'bg-red-50 border-red-200' :
+                        'bg-blue-50 border-blue-200'
+                    }">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-6 h-6 rounded-full ${
+                                    finding.type === 'success' ? 'bg-green-500' :
+                                    finding.type === 'warning' ? 'bg-amber-500' :
+                                    finding.type === 'error' ? 'bg-red-500' :
+                                    'bg-blue-500'
+                                } flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        ${finding.type === 'success' ? 
+                                          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>' :
+                                          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>'
+                                        }
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-900 mb-1">${finding.title}</h4>
+                                <p class="text-sm text-gray-700 mb-2">${finding.description}</p>
+                                <p class="text-sm text-gray-600"><strong>Recommendation:</strong> ${finding.recommendation}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateAuditTrail() {
+                const container = document.getElementById('auditTrail');
+                const trail = [
+                    { time: '09:15:23', action: 'Data loaded', user: 'System', status: 'success' },
+                    { time: '09:15:45', action: 'Duplicate detection started', user: 'System', status: 'running' },
+                    { time: '09:15:52', action: 'Duplicate detection completed', user: 'System', status: 'success' },
+                    { time: '09:16:10', action: 'Gap detection started', user: 'System', status: 'running' },
+                    { time: '09:16:18', action: 'Gap detection completed', user: 'System', status: 'success' },
+                    { time: '09:16:35', action: 'Benford\'s Law analysis started', user: 'System', status: 'running' },
+                    { time: '09:16:47', action: 'Benford\'s Law analysis completed', user: 'System', status: 'success' },
+                    { time: '09:17:02', action: 'Report generated', user: 'System', status: 'success' }
+                ];
+
+                container.innerHTML = trail.map(entry => `
+                    <div class="flex items-center space-x-4 py-2 border-b border-gray-100 last:border-b-0">
+                        <div class="text-sm text-gray-500 w-20">${entry.time}</div>
+                        <div class="flex-1 text-sm text-gray-900">${entry.action}</div>
+                        <div class="text-sm text-gray-500 w-20">${entry.user}</div>
+                        <div class="w-2 h-2 rounded-full ${
+                            entry.status === 'success' ? 'bg-green-500' :
+                            entry.status === 'running' ? 'bg-amber-500' :
+                            'bg-red-500'
+                        }"></div>
+                    </div>
+                `).join('');
+            }
+
+            animateElements() {
+                // Animate metric cards
+                anime({
+                    targets: '.metric-card',
+                    opacity: [0, 1],
+                    translateY: [20, 0],
+                    delay: anime.stagger(100),
+                    duration: 600,
+                    easing: 'easeOutQuart'
+                });
+
+                // Animate charts
+                setTimeout(() => {
+                    Object.values(this.charts).forEach(chart => {
+                        chart.resize();
+                    });
+                }, 500);
+            }
+        }
+
+        // Initialize dashboard when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ResultsDashboard();
+        });
+
+        // Handle window resize for charts
+        window.addEventListener('resize', () => {
+            Object.values(window.resultsDashboard?.charts || {}).forEach(chart => {
+                chart.resize();
+            });
+        });
+    </script>
+</body>
+</html>
